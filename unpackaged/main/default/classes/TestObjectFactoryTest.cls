@@ -5,6 +5,34 @@
 @IsTest
 public with sharing class TestObjectFactoryTest {
 
+    @isTest static void Defaults() {
+        TestObjectFactoryAccount factory = new TestObjectFactoryAccount();
+
+
+        List<Test_Class_Default__mdt> expectedAccountNames = [SELECT Lookup_Value__c FROM Test_Class_Default__mdt WHERE DeveloperName = 'Contact_Parent_For_Test' LIMIT 1];
+
+        if (expectedAccountNames.size() <> 1)
+            throw new MyException('Unable to locate custom metadata type Test_Class_Default__mdt with DeveloperName Contact_Parent_For_Test. This must be of type Lookup.');
+
+        String accountName = expectedAccountNames[0].Lookup_Value__c;
+        factory.setFieldValue(Account.Name,accountName);
+
+        Test.startTest();
+        Account a = factory.createRecord(true);
+
+        a = [SELECT Id, Name from Account WHERE Id = :a.Id];
+
+        TestObjectFactoryContact contactFactory = new TestObjectFactoryContact();
+        contactFactory.restrictDefaultsToIsTest = true;
+        contactFactory.setFieldValue(Contact.LastName,'TestContact');
+        Contact c = contactFactory.createRecord(true);
+
+        c = [SELECT Id, AccountId FROM Contact where Id = :c.Id];
+
+        System.assertEquals(c.AccountId,a.Id);
+        Test.stopTest();
+
+    }
 
     @isTest static void AccountTest() {
         List<Account> accounts = new List<Account>();
